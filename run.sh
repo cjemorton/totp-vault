@@ -1,7 +1,41 @@
 #!/usr/pkg/bin/bash
 # This project is intended to quickly bootstrap an environment where TOTO keys can be used.
+##
+# Check if an argument is provided
+if [ "$#" -eq 0 ]; then
+    echo "No URL provided."
+    exit 1
+fi
+
+url="$1"
+
+# Basic URL validation
+if [[ ! "$url" =~ ^https?:// ]]; then
+    echo "Invalid URL: URL must start with http:// or https://"
+    exit 1
+fi
+
+# Check if the URL is reachable
+if ! curl --head --silent --fail "$url" > /dev/null; then
+    echo "Invalid URL: The URL is not reachable."
+    exit 1
+fi
+
+# Check to make sure curl is installed
+if ! curl --version &> /dev/null; then
+        echo "Please install curl"
+        exit 1
+fi
+
+json_data=$(curl -s $url)
+# NOTE: To encode the JSON String: echo -n 'your_message' | jq -R . | jq ."
+# TODO: Write a guard to check if jq is installed.
+#jq -r . | base64 -D | gpg -d
+TOTP=$(echo $json_data | jq -r . | base64 -D)
 
 
+
+#-------------------------------------------------------------#
 # Check python3 version.
 if ! python --version &> /dev/null; then
     echo "Python3 is not installed."
@@ -25,12 +59,6 @@ version=$(gpg --version | head -n 1 | awk '{print $3}' | cut -d. -f 1)
 if [[ "$version" -lt 1 ]]; then
     echo "gpg is installed but it's version is less than 1.0.0"
     exit 1
-fi
-
-# Check to make sure curl is installed
-if ! curl --version &> /dev/null; then
-	echo "Please install curl"
-	exit 1
 fi
 
 # # Check to see if 'pip' is installed"
@@ -71,14 +99,9 @@ fi
 
 echo "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --"
 if ls *.gpg 1> /dev/null 2>&1; then
-    echo "Found one or more .gpg files."
 	python totp_generator.py/totp_generator.py $(gpg -d *.gpg)
-    # Perform actions if .gpg files are found
 else
-    echo "No .gpg files found."
-	echo "Please enter your TOTP Authenticator KEY.:"
-	read -r user_input
-	echo "$user_input" | gpg -c > encrypted_TOTP_Authenticator_KEY.gpg
+	echo "$TOTP" > key.txt.gpg
 	python totp_generator.py/totp_generator.py $(gpg -d *.gpg)
 fi
 echo "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --"
