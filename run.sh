@@ -1,4 +1,6 @@
 #!/usr/pkg/bin/bash
+# This project is intended to quickly bootstrap an environment where TOTO keys can be used.
+
 
 # Check python3 version.
 if ! python --version &> /dev/null; then
