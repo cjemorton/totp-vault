@@ -15,3 +15,6 @@
 
 # To create JSON data.
 `echo "YOUR_TOTP" | gpg -c | base64 | jq -R . | jq .`
+
+
+`$JSON_STRING | jq -r . | base64 -D | gpg -d`
